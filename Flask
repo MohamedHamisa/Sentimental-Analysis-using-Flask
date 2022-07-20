@@ -64,4 +64,3 @@ if __name__ == "__main__":
     init()
     app.run()
 
-https://github.com/nitinkaushik01/Deep_and_Machine_Learning_Projects/tree/master/Build_Sentiment_Analysis_Flask_Web_App/AI_App
