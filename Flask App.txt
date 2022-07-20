@@ -1,0 +1,67 @@
+#flask app
+#flask is a python web frame that provides useful tools and features that make creating web apps in python easier
+#renderit is like home or login page
+#request library to get the user requests likepost , write 
+#url when we want to build a url for function 
+from flask import Flask, render_template, flash, request, url_for, redirect, session
+import numpy as np
+import pandas as pd
+import re
+import os
+import tensorflow as tf
+from numpy import array
+from keras.datasets import imdb
+from keras.preprocessing import sequence
+from keras.models import load_model
+
+IMAGE_FOLDER = os.path.join('static', 'img_pool') #img pool for imogies
+
+app = Flask(__name__)
+
+app.config['UPLOAD_FOLDER'] = IMAGE_FOLDER
+
+def init():
+    global model,graph
+    # load the pre-trained Keras model
+    model = load_model('sentiment_analysis.h5')
+    graph = tf.get_default_graph()
+
+#########################Code for Sentiment Analysis
+@app.route('/', methods=['GET', 'POST'])  #to match url with view function ,get for output post for input,,#it's about the default page
+def home():
+
+    return render_template("home.html")
+
+@app.route('/sentiment_analysis_prediction', methods = ['POST', "GET"])  #decorator end point is sentiment_analysis_prediction
+def sent_anly_prediction():
+    if request.method=='POST':
+        text = request.form['text'] #extract text from here
+        sentiment = '' #so that it won't store any garbge values
+        max_review_length = 500
+        word_to_id = imdb.get_word_index()
+        strip_special_chars = re.compile("[^A-Za-z0-9 ]+")  #remove any special characters
+        text = text.lower().replace("<br />", " ") #lower case , replace any html tags with blanks
+        text=re.sub(strip_special_chars, "", text.lower()) #sub any spec.cha. with blanks
+
+        words = text.split() #split string into a list
+        x_test = [[word_to_id[word] if (word in word_to_id and word_to_id[word]<=20000) else 0 for word in words]]
+        x_test = sequence.pad_sequences(x_test, maxlen=500) # Should be same which you used for training data
+        vector = np.array([x_test.flatten()])
+        with graph.as_default():
+            probability = model.predict(array([vector][0]))[0][0]
+            class1 = model.predict_classes(array([vector][0]))[0][0]
+        if class1 == 0:
+            sentiment = 'Negative'
+            img_filename = os.path.join(app.config['UPLOAD_FOLDER'], 'Sad_Emoji.png')
+        else:
+            sentiment = 'Positive'
+            img_filename = os.path.join(app.config['UPLOAD_FOLDER'], 'Smiling_Emoji.png')
+    return render_template('home.html', text=text, sentiment=sentiment, probability=probability, image=img_filename)
+#########################Code for Sentiment Analysis
+#when it runs the app becomes"__main__" if the if get activated
+#We call init function to initialize the model then run
+if __name__ == "__main__":     
+    init()
+    app.run()
+
+https://github.com/nitinkaushik01/Deep_and_Machine_Learning_Projects/tree/master/Build_Sentiment_Analysis_Flask_Web_App/AI_App
